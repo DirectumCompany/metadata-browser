@@ -1,0 +1,1 @@
+dotnet.exe publish MetadataBrowser.csproj -f net5.0-windows -o package/win-x64 -c Release -r win-x64 /p:PublishTrimmed=true /p:TrimMode=Link /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
