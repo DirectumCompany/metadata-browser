@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -8,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using System.Xml.Linq;
 using Npgsql;
 using ScintillaNET;
 
@@ -567,6 +569,33 @@ namespace MetadataBrowser
     }
 
     /// <summary>
+    /// Получить запрос данных сборок.
+    /// </summary>
+    /// <param name="connection">Соединение.</param>
+    /// <returns>Запрос данных сборок.</returns>
+    private string GetAssemblyDataCommandText(DbConnection connection)
+    {
+      // Начиная с какой-то версии, данные сборок перенесли в другую таблицу, поддерживаенм оба варианта.
+      using (var command = DatabaseEngine.Instance.CreateCommand("select 1 from information_schema.tables where table_name = 'sungero_ide_fulldeploydata'", connection))
+      {
+        using (var reader = command.ExecuteReader())
+        {
+          if (reader.HasRows)
+          {
+            return "select sif.name, sifdd.data " +
+              "from sungero_ide_fulldeploy sif " +
+              "  inner join sungero_ide_fulldeploydata sifdd " +
+              "    on sif.assemblydatahash = sifdd.hash";
+          }
+          else
+          {
+            return "select name, assemblydata FROM sungero_ide_fulldeploy";
+          }
+        }
+      }
+    }
+
+    /// <summary>
     /// Экспортировать разработку в локальную папку.
     /// </summary>
     private string ExportDevelopmentToLocalFolder()
@@ -578,7 +607,7 @@ namespace MetadataBrowser
       using var connection = DatabaseEngine.Instance.CreateConnection(AppSettings.Instance.ConnectionString);
       connection.Open();
 
-      using (var command = DatabaseEngine.Instance.CreateCommand("SELECT name, assemblydata FROM sungero_ide_fulldeploy", connection))
+      using (var command = DatabaseEngine.Instance.CreateCommand(this.GetAssemblyDataCommandText(connection), connection))
       {
         using (var reader = command.ExecuteReader())
         {
@@ -592,7 +621,13 @@ namespace MetadataBrowser
               {
                 var assemblyFolder = Path.GetDirectoryName(assemblyFileName);
                 Directory.CreateDirectory(assemblyFolder);
-                var assemblyData = (byte[])reader["assemblydata"];
+
+                byte[] assemblyData = null;
+                if (reader.GetName(1) == "assemblydata")
+                  assemblyData = (byte[])reader["assemblydata"];
+                else
+                  assemblyData = (byte[])reader["data"];
+
                 File.WriteAllBytes(assemblyFileName, assemblyData);
                 if (assemblyName.StartsWith("shared"))
                 {
