@@ -29,6 +29,11 @@ namespace MetadataBrowser
     private List<MetadataFileInfo> allTreeNodes = new List<MetadataFileInfo>();
 
     /// <summary>
+    /// Узел элементов метаданных, для которых не удалось найти родительский узел.
+    /// </summary>
+    private MetadataFileInfo unparentedMetadataFileInfo = new MetadataFileInfo();
+
+    /// <summary>
     /// Папки разработки.
     /// </summary>
     private List<string> developmentFolders = new List<string>();
@@ -300,7 +305,8 @@ namespace MetadataBrowser
     /// Добавить информацию о файле метаданных.
     /// </summary>
     /// <param name="metadataFileInfo">Информация о файле метаданных.</param>
-    private void AddMetadataFileInfo(MetadataFileInfo metadataFileInfo)
+    /// <param name="isRootLevelNode">Признак узла верхнего уровня.</param>
+    private void AddMetadataFileInfo(MetadataFileInfo metadataFileInfo, bool isRootLevelNode = false)
     {
       var currentTreeNode = FindTreeNodeByGuid(metadataFileInfo.NameGuid);
       if (currentTreeNode != null)
@@ -319,6 +325,12 @@ namespace MetadataBrowser
       }
       else if (parentTreeNode != null)
       {
+        parentTreeNode.Nodes.Add(treeNode);
+        treeNode.Parent = parentTreeNode;
+      }
+      else if (metadataFileInfo != this.unparentedMetadataFileInfo && !isRootLevelNode)
+      {
+        parentTreeNode = FindTreeNodeByGuid(this.unparentedMetadataFileInfo.NameGuid);
         parentTreeNode.Nodes.Add(treeNode);
         treeNode.Parent = parentTreeNode;
       }
@@ -413,95 +425,101 @@ namespace MetadataBrowser
 
     private void MetadataBrowserForm_Load(object sender, EventArgs e)
     {
+      this.unparentedMetadataFileInfo = new MetadataFileInfo();
+      this.unparentedMetadataFileInfo.FileName = "(unparented)";
+      this.unparentedMetadataFileInfo.NameGuid = "3a5d05a5-e5c4-4851-b958-e30f53bfe8fc";
+      this.unparentedMetadataFileInfo.FileContent = "=== Метаданные узла без родителя ===";
+      this.AddMetadataFileInfo(this.unparentedMetadataFileInfo, true);
+
       var taskMetadataFileInfo = new MetadataFileInfo();
       taskMetadataFileInfo.FileName = "Задача.mtd";
       taskMetadataFileInfo.NameGuid = "d795d1f6-45c1-4e5e-9677-b53fb7280c7e";
       taskMetadataFileInfo.FileContent = "=== Метаданные базовой задачи ===";
-      this.AddMetadataFileInfo(taskMetadataFileInfo);
+      this.AddMetadataFileInfo(taskMetadataFileInfo, true);
 
       var databookMetadataFileInfo = new MetadataFileInfo();
       databookMetadataFileInfo.FileName = "Справочник.mtd";
       databookMetadataFileInfo.NameGuid = "04581d26-0780-4cfd-b3cd-c2cafc5798b0";
       databookMetadataFileInfo.FileContent = "=== Метаданные справочника ===";
-      this.AddMetadataFileInfo(databookMetadataFileInfo);
+      this.AddMetadataFileInfo(databookMetadataFileInfo, true);
 
       var docMetadataFileInfo = new MetadataFileInfo();
       docMetadataFileInfo.FileName = "Документ.mtd";
       docMetadataFileInfo.NameGuid = "030d8d67-9b94-4f0d-bcc6-691016eb70f3";
       docMetadataFileInfo.FileContent = "=== Метаданные документа ===";
-      this.AddMetadataFileInfo(docMetadataFileInfo);
+      this.AddMetadataFileInfo(docMetadataFileInfo, true);
 
       var childMetadataFileInfo = new MetadataFileInfo();
       childMetadataFileInfo.FileName = "Дочерняя сущность.mtd";
       childMetadataFileInfo.NameGuid = "a3d38bf5-0414-41f6-bb33-a4621d2e5a60";
       childMetadataFileInfo.FileContent = "=== Метаданные дочерней сущности ===";
-      this.AddMetadataFileInfo(childMetadataFileInfo);
+      this.AddMetadataFileInfo(childMetadataFileInfo, true);
 
       var userMetadataFileInfo = new MetadataFileInfo();
       userMetadataFileInfo.FileName = "Пользователь.mtd";
       userMetadataFileInfo.NameGuid = "243c2d26-f5f7-495f-9faf-951d91215c77";
       userMetadataFileInfo.FileContent = "=== Метаданные пользователя ===";
-      this.AddMetadataFileInfo(userMetadataFileInfo);
+      this.AddMetadataFileInfo(userMetadataFileInfo, true);
 
       var groupMetadataFileInfo = new MetadataFileInfo();
       groupMetadataFileInfo.FileName = "Группа.mtd";
       groupMetadataFileInfo.NameGuid = "31b5643f-ddd7-4021-8f3c-29b43f4df51f";
       groupMetadataFileInfo.FileContent = "=== Метаданные группы ===";
-      this.AddMetadataFileInfo(groupMetadataFileInfo);
+      this.AddMetadataFileInfo(groupMetadataFileInfo, true);
 
       var moduleMetadataFileInfo = new MetadataFileInfo();
       moduleMetadataFileInfo.FileName = "Модуль.mtd";
       moduleMetadataFileInfo.NameGuid = "00000000-0000-0000-0000-000000000000";
       moduleMetadataFileInfo.FileContent = "=== Метаданные модуля ===";
-      this.AddMetadataFileInfo(moduleMetadataFileInfo);
+      this.AddMetadataFileInfo(moduleMetadataFileInfo, true);
 
       var reportMetadataFileInfo = new MetadataFileInfo();
       reportMetadataFileInfo.FileName = "Отчет.mtd";
       reportMetadataFileInfo.NameGuid = "cef9a810-3f30-4eca-9fe3-30992af0b818";
       reportMetadataFileInfo.FileContent = "=== Метаданные отчета ===";
-      this.AddMetadataFileInfo(reportMetadataFileInfo);
+      this.AddMetadataFileInfo(reportMetadataFileInfo, true);
 
       var assignmentMetadataFileInfo = new MetadataFileInfo();
       assignmentMetadataFileInfo.FileName = "Задание.mtd";
       assignmentMetadataFileInfo.NameGuid = "91cbfdc8-5d5d-465e-95a4-3235b8c01d5b";
       assignmentMetadataFileInfo.FileContent = "=== Метаданные задания ===";
-      this.AddMetadataFileInfo(assignmentMetadataFileInfo);
+      this.AddMetadataFileInfo(assignmentMetadataFileInfo, true);
 
       var versionMetadataFileInfo = new MetadataFileInfo();
       versionMetadataFileInfo.FileName = "Версия.mtd";
       versionMetadataFileInfo.NameGuid = "ca20a436-3798-4efc-9997-a3f31394c334";
       versionMetadataFileInfo.FileContent = "=== Метаданные версии ===";
-      this.AddMetadataFileInfo(versionMetadataFileInfo);
+      this.AddMetadataFileInfo(versionMetadataFileInfo, true);
 
       var groupRecipientMetadataFileInfo = new MetadataFileInfo();
       groupRecipientMetadataFileInfo.FileName = "Член группы.mtd";
       groupRecipientMetadataFileInfo.NameGuid = "20784da1-10a0-4ce1-97de-8a075142c47a";
       groupRecipientMetadataFileInfo.FileContent = "=== Метаданные члена группы ===";
-      this.AddMetadataFileInfo(groupRecipientMetadataFileInfo);
+      this.AddMetadataFileInfo(groupRecipientMetadataFileInfo, true);
 
       var noticeMetadataFileInfo = new MetadataFileInfo();
       noticeMetadataFileInfo.FileName = "Уведомление.mtd";
       noticeMetadataFileInfo.NameGuid = "ef79164b-2ce7-451b-9ba6-eb59dd9a4a74";
       noticeMetadataFileInfo.FileContent = "=== Метаданные уведомления ===";
-      this.AddMetadataFileInfo(noticeMetadataFileInfo);
+      this.AddMetadataFileInfo(noticeMetadataFileInfo, true);
 
       var taskObserversMetadataFileInfo = new MetadataFileInfo();
       taskObserversMetadataFileInfo.FileName = "Наблюдатели.mtd";
       taskObserversMetadataFileInfo.NameGuid = "ac08b548-e666-4d9b-816f-a6c5e08e360f";
       taskObserversMetadataFileInfo.FileContent = "=== Метаданные наблюдателей ===";
-      this.AddMetadataFileInfo(taskObserversMetadataFileInfo);
+      this.AddMetadataFileInfo(taskObserversMetadataFileInfo, true);
 
       var documentTemplateMetadataFileInfo = new MetadataFileInfo();
       documentTemplateMetadataFileInfo.FileName = "Шаблон документа.mtd";
       documentTemplateMetadataFileInfo.NameGuid = "9abcf1b7-f630-4a82-9912-7f79378ab199";
       documentTemplateMetadataFileInfo.FileContent = "=== Метаданные шаблона документа ===";
-      this.AddMetadataFileInfo(documentTemplateMetadataFileInfo);
+      this.AddMetadataFileInfo(documentTemplateMetadataFileInfo, true);
 
       var documentTemplateVersionsMetadataFileInfo = new MetadataFileInfo();
       documentTemplateVersionsMetadataFileInfo.FileName = "Версия шаблона документа.mtd";
       documentTemplateVersionsMetadataFileInfo.NameGuid = "4a8c9edc-8b7c-450e-8222-dc12b025e449";
       documentTemplateVersionsMetadataFileInfo.FileContent = "=== Метаданные версии шаблона документа ===";
-      this.AddMetadataFileInfo(documentTemplateVersionsMetadataFileInfo);
+      this.AddMetadataFileInfo(documentTemplateVersionsMetadataFileInfo, true);
 
       if (!string.IsNullOrEmpty(AppSettings.Instance.ConnectionString))
         this.developmentFolders.Add(ExportDevelopmentToLocalFolder());
